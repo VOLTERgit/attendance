@@ -1,0 +1,193 @@
+═══════════════════════════════════════════════════════════════════════════════
+                     QUICK FACE CLOCK WORKFLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+                              START
+                                │
+                                ▼
+                    ┌─────────────────────────┐
+                    │   LOGIN SCREEN SHOWS    │
+                    │   • Employee ID field   │
+                    │   • Password field      │
+                    │   • [SIGN IN] button    │
+                    │   • [SCAN FACE] button  │  ◄── NEW!
+                    └─────────────────────────┘
+                            │         │
+            ┌───────────────┘         └────────────────┐
+            │                                          │
+            ▼                                          ▼
+    ┌──────────────────┐                   ┌──────────────────┐
+    │  SIGN IN BUTTON  │                   │ SCAN FACE BUTTON │
+    │  (TRADITIONAL)   │                   │      (NEW)       │
+    └────────┬─────────┘                   └────────┬─────────┘
+             │                                      │
+             ▼                                      ▼
+    ┌──────────────────────────┐          ┌──────────────────────────┐
+    │ ENTER ID + PASSWORD      │          │ OPEN WEBCAM              │
+    │ (keyboard/manual entry)  │          │ (face auto-recognition)  │
+    └────────┬─────────────────┘          └──────────┬───────────────┘
+             │                                       │
+             ▼                                       ▼
+    ┌──────────────────────────┐          ┌──────────────────────────┐
+    │ USER AUTHENTICATED       │          │ FACE SCAN SEQUENCE       │
+    │ Session created          │          │ ┌──────────────────────┐ │
+    │                          │          │ │ PHASE 1: CENTER      │ │
+    └────────┬─────────────────┘          │ │ Position straight    │ │
+             │                            │ │ Get 2 matched frames │ │
+             ▼                            │ │                      │ │
+    ┌──────────────────────────┐          │ │ PHASE 2: TURN        │ │
+    │ SHOW DASHBOARD           │          │ │ Head turn detection  │ │
+    │ • View own attendance    │          │ │ (anti-photo check)   │ │
+    │ • Clock in/out (manual)  │          │ │                      │ │
+    │ • View history           │          │ │ PHASE 3: CENTER      │ │
+    │ • (HR/Manager features)  │          │ │ Return to center     │ │
+    │                          │          │ │ Get remaining frames │ │
+    └────────┬─────────────────┘          │ │ until 5 total        │ │
+             │                            │ └──────────────────────┘ │
+             ▼                            └──────────┬────────────────┘
+         ┌──────┐                                    │
+         │ DONE │                                    ▼
+         └──────┘                         ┌──────────────────────────┐
+                                          │ FACE RECOGNITION         │
+                                          │                          │
+                                          │ Query face model:        │
+                                          │ "Whose face is this?"    │
+                                          │                          │
+                                          │ Match confidence check   │
+                                          └──────────┬───────────────┘
+                                                     │
+                                    ┌────────────────┴────────────────┐
+                                    │                                 │
+                                    ▼                                 ▼
+                        ┌──────────────────────┐      ┌──────────────────────┐
+                        │ MATCH FOUND          │      │ NO MATCH / LOW CONF   │
+                        │ ✓ Recognized!        │      │ ✗ Face not           │
+                        │                      │      │   recognized         │
+                        └──────────┬───────────┘      └──────────┬───────────┘
+                                   │                            │
+                                   ▼                            ▼
+                        ┌──────────────────────┐      ┌──────────────────────┐
+                        │ CHECK ATTENDANCE DB  │      │ SHOW ERROR           │
+                        │                      │      │ "Face not recognized │
+                        │ Query for today's    │      │  Please use regular  │
+                        │ attendance record    │      │  login"              │
+                        │ for this employee    │      │                      │
+                        └──────────┬───────────┘      │ Return to login      │
+                                   │                 │ screen               │
+                                   ▼                 └──────────────────────┘
+                        ┌──────────────────────┐              │
+                        │ FOUND RECORD?        │              │
+                        └──┬──────────────┬────┘              │
+                     YES   │              │   NO              │
+                        ┌──▼─┐         ┌──▼──┐               │
+                        │    │         │     │               │
+                    ┌───▼──┐│         │┌──┬─▼───┐            │
+                    │      ││         ││  │     │            │
+                   HAS    HAS         │No  Yes  │            │
+                  CLOCK-   │        CLOCK CLOCK│            │
+                   OUT?    │         IN?   IN? │            │
+                    │      │         │     │   │            │
+                    ▼      ▼         ▼     │   │            │
+                  NO   YES              │   │   │            │
+                    │      │             │   │   │            │
+                    │      └──┐          │   │   │            │
+                    │         ▼          │   │   │            │
+        ALREADY  ┌──────────────────┐   │   │   │            │
+        CLOCKED  │ CLOCK OUT        │   │   │   │            │
+        OUT   ◄──┤ • Get current    │   │   │   │            │
+                 │   time           │   │   │   │            │
+                 │ • Update         │   │   │   │            │
+                 │   clock_out      │   │   │   │            │
+                 │   column         │   │   │   │            │
+                 │ • Auto-calculate │   │   │   │            │
+                 │   late/early/OT  │   │   │   │            │
+                 │ • Log to audit   │   │   │   │            │
+                 └──────┬───────────┘   │   │   │            │
+                        │               ▼   │   │            │
+                        │        ┌──────────┐   │            │
+                        │        │ CREATE   │   │            │
+                        │        │ NEW      │   │            │
+                        │        │ ATTENDANCE   │            │
+                        │        │ RECORD   │   │            │
+                        │        │ • attendance_id            │
+                        │        │ • employee_id             │
+                        │        │ • attendance_date         │
+                        │        │ • clock_in = NOW          │
+                        │        │ • clock_out = NULL        │
+                        │        │ • verification = FACE     │
+                        │        │ • Log to audit            │
+                        │        └──────┬──────┘            │
+                        │               │                   │
+                        └───────────────┴───────────────────┤
+                                       │                     │
+                                       ▼                     │
+                        ┌──────────────────────────┐         │
+                        │ SHOW CONFIRMATION DIALOG │◄────────┘
+                        │ ✓ CLOCK IN/OUT RECORDED  │
+                        │ Name: [Employee Name]    │
+                        │ Time: [HH:MM AM/PM]      │
+                        │                          │
+                        │ "Log in to view details?"│
+                        │ [YES]  [NO]              │
+                        └──────────┬───────────────┘
+                                   │
+                        ┌──────────┴──────────┐
+                        │                     │
+                        ▼                     ▼
+                    [YES]                 [NO]
+                        │                     │
+                    SHOW           SHOW
+                    LOGIN           LOGIN
+                    SCREEN          SCREEN
+                        │                     │
+                        └─────────┬───────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │  User can now:   │
+                         │ • Log in normally│
+                         │ • Scan face      │
+                         │ • Exit app       │
+                         └──────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                        KEY DIFFERENCES FROM NORMAL LOGIN
+═══════════════════════════════════════════════════════════════════════════════
+
+NORMAL LOGIN (Sign In Button)          QUICK CLOCK (Scan Face Button)
+─────────────────────────────────      ─────────────────────────────
+1. Enter ID manually                   1. Face is auto-recognized
+2. Enter password manually             2. No password needed
+3. User creates session                3. No session created
+4. Access full dashboard               4. Attendance recorded only
+5. Must manually clock in/out          5. Clocking happens immediately
+6. Takes ~20-30 seconds                6. Takes ~5-10 seconds
+7. Multiple login options available    7. Face only (no fallback)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                            DATABASE CHANGES
+═══════════════════════════════════════════════════════════════════════════════
+
+✓ No schema changes required
+✓ Uses existing tables:
+  • attendance (employee_id, clock_in, clock_out, verification_method)
+  • audit_logs (entity_type, entity_id, changed_by, reason)
+  • employees (id, name)
+  • users (username)
+
+✓ Fills same fields as normal login:
+  • INSERT into attendance(employee_id, attendance_date, clock_in, verification_method)
+  • UPDATE attendance set clock_out = NOW() WHERE id = record_id
+  • INSERT into audit_logs(..., reason = "Face-scan clock from login screen")
+
+✓ Dependent calculations auto-trigger:
+  • late_minutes
+  • early_leave_minutes
+  • overtime_minutes
+  • actual_minutes
+  (These are computed by compute_attendance() on every change)
+
+
+═══════════════════════════════════════════════════════════════════════════════
